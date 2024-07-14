@@ -1,0 +1,402 @@
+1.- Inicializamos el proyecto en la carpeta ejecutando el siguiente comando.Con este comando, la inicialización del proyecto será "por defecto" es decir asumirá ciertas descripciones ya que al usar la clave "-y" indicamos
+"si" (yes) a todo. Con esto se crea un archivo llamado "package.json" el cual contiene la configuración de nuestro proyecto.
+
+npm init -y
+
+2.- En el archivo package.json podemos completar los campos deseados y como buena practica, se reordena para dejar los objetos hacia abajo y las llaves
+con definicion fija, hacia arriba. Subimos (reubicamos) las llaves de keywords, author, license y description.Al final quedan los script.
+
+Los scripts son los comandos que se ejecutan en la terminal. De momento, hay que borrar el "test" para dejar el archivo en blanco y necesitamos definir
+idealmente 2 script. Uno para desarrollo y otro para producción. Estos comandos se recomienda que vayan diferenciados. Escribimos:
+
+"dev":"nodemon index.js",
+"start":"node.index.js" //utilizado en producción.
+
+Asi, los scripts seran:
+
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start":"node index.js"
+  },
+
+3.- Instalación del HOTRELOADER (reinicios en caliente). Esto es necesario para recargar el servidor en la medida que vayamos haciendo cambios. El paquete se llama nodemon. De ahi
+que en desarrollo (dev) debamos indicar que el comando a ejecutar es "nodemon index.js". Este paquete va a quedar "escuchando" constantemene cambios ques e guarden en nuestro
+proyecto (servidor) y automáticamente va a bajar el servidor(en realidad corta la ejecución de node, como si presionaramos ctrl+c) y lo levanta nuevamente, ahora actualizado.
+Lo instalamos ejecutando el siguiente comando.
+
+npm i -D nodemon
+
+Ojo que nodemon se utilizará solo en desarrollo, por tanto, no tiene sentido instalarlo como dependencia de producción. Por esto agregamos la bandera "-D" de Development. Con esto,
+en el archivo "package.json" se crean las siguientes lineas:
+
+ "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+Donde se ve que como dependencia de desarrollo (DevelopmentDependencies o devDependencies) se instala nodemon.
+
+4.- Instalación del lintern para escritura de código correctamente.
+Nuevamente, en producción no necesitamos revisar código, por tanto hay que instalarlo solo en desarrollo. Ejecutamos el comando:
+
+npm i -D standard
+
+** Podremos notar que el valor de algunas llaves muestra el caracter "^". Este caracter indica que es una versión actualizable. Es decir, si el desarrollador del paquete hace alguna
+actualización, al instalar el paquete se va a instalar la version actualizada.
+
+Ahora procedemos a configurar el eslint agregando la siguiente línea de codigo en nuestro archivo package.json - Por una cuestion de orden, se recomienda agregarla antes del objeto
+scripts
+
+"eslintConfig": {
+    "extends": [
+      "./node_modules/standard/eslintrc.json"
+    ]
+  },
+
+5.- Instalación de express para crear nuestro servidor. ejecutamos el siguiente código pero Ojo, ahora se requiere ADEMAS en producción.
+
+npm i express
+
+Con esto, el archivo package.json tendra la siguiente info hacia el final (notar que las "devDependencies" no llegarán a desarrollo mientras que las "dependencies" si lo harán).
+
+"devDependencies": {
+    "nodemon": "^3.1.4",
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+
+6.- IMPORT. En nuestro proyecto vamos a trabajar con import, por tanto tenemos que definir el "tipo" de proyecto definiendo la siguiente llave en nuestro package.json. Por defecto, si
+no hacemos esto, tendriamos que trabajar con "require" (comand gs)
+
+"type":"module",
+
+7.- Trabajaremos ademas con VARIABLES DE ENTORNO y para ello, debemos instalar el siguiente paquete:
+
+npm i dotenv
+
+Ademas en el directorio raiz creamos los siguientes archivos
+- .env
+- .env.example
+
+En el archivo .env almacenaremos nuestras variables de entorno. Son algo asi como variables globales que estarán disponibles durante toda la ejecución de nuestro código. Contienen información
+sensible la cual no debe compartirse en git por ejemplo (ver siguiente paso). Es solo un archivo local, para mi computador. Lo que sipodemos subir a git es el archivo llamado ".env.example"
+el cual es una copia del archivo .env Pero sin los valores. Es decir, solo tendrá el nombre de las variables.
+
+8.- Creamos nuestro archivo .gitignore y dentro, indicamos que queremos ignorar al archivo .env y la carpeta "node_modules"
+
+9.- En el directorio raiz de nuestro proyecto creamos la siguiente estructura:
+
+- Un archivo llamado "index.js"
+- una carpeta llamada "SRC y dentro, creamos una carpeta llamada server y dentro un archivo llamado "app.js"
+
+10.-Mas adelante, al ejecutar nuestro servidor, se va a ejecutar el archivo index.js (Recordar, ejecutaremos npm run dev y esto ejecutará "nodemon index.js" de
+forma interna). Este archivo index actua como orquestador y desde el, se realizan todos los llamados. Entonces, el index.js se tiene que llamar al archivo que
+levanta el servidor (app.js). Escribimos entonces en el archivo index el siguiente codigo:
+
+import './src/server/app.js'
+
+Pero, recordar... Ademas, estaremos trabajando con variables de entorno. Por ello, antes del import de nuestro archivo app.js tenemos que importar la configuración
+de nuestras variables de entorno para que estas funcionen en todo nuestro proyecto.
+
+import 'dotenv/config' // Llamar antes del import app.js
+import './src/server/app.js'
+
+11.- Comenzamos a definir nuesro SERVIDOR en el archivo app.js. pero antes,en la terminal instalamos express ejecutando:
+
+npm i express;
+
+Luego, en nuestro archivo app.js escribimos:
+
+import express from 'express' // importamos express
+const app = express() // Ejecutamos express y su ejecución la almacenamos en una constante
+
+app.listen(PORT, () => { console.log('server Up... Listening') })
+export default app
+
+Como se observa, en la función app.listen (Que es la función que levantará nuestro servidor), se debe definir dos argumentos: El primero es un Puerto. Este parámetro se entregará a la función haciendo uso de las
+variables de entorno. En nuestro archivo .env escribimos lo siguiente:
+
+////SERVER APP
+PORT=3000
+
+y luego, en el archivo app.js, agregamos la siguiente linea:
+
+const PORT = process.env.PORT ?? 3000 // llamamos a la variable PORT desde nuestras variables de entorno y si esta no está creada, por defecto define el puerto 3000
+
+Con esto, decimos que a la constante PORT le asignaremos el valor de la variable PORT definida como variable de entorno y si esta, por algun motivo, no está definida, se asignará
+por defecto el valor 3000.
+
+Así, nuestro archivo app.js, hasta el momento queda como se muestra acontinuación:
+
+import express from 'express' // importamos express
+const app = express() // Ejecutamos express y su ejecución la almacenamos en una constante
+const PORT = process.env.PORT ?? 3000 // llamamos a la variable PORT desde nuestras variables de entorno y si esta no está creada, por defecto define el puerto 3000
+
+app.listen(PORT, () => { console.log('server Up') })
+
+
+Retomando la función app.listen, el segundo parámetro es una función callback la cual se utiliza para retroalimentarnos y saber si el servidor está arriba y listo para escuchar las peticiones
+que haga el cliente. Mas adelante configuraremos las respuestas del servidor ante las peticiones.
+
+12.- Definición de rutas a escuchar (peticiones)
+Vamos a definir las respuestas que nuestro servidor entregará ante las distintas solicitudes del usuario: get, post, delete, etc. Esto se realizará definiendo los siguientes metodos.
+
+app.verbo('path', ()=>{})
+
+-> en path vamos a definir la ruta que el servidor estará escuchando. Esta ruta nunca debe decir lo que hace. No podemos definir una ruta llamada www.pokeapi.com/borrarPokemon. Por lo general, se usa
+un nombre generico y luego, el verbo es quien mandatará la acción a realizar. Ejemplo: www.pokeapi.com/pokemon
+-> Como ya se mencionó, en verbo vamos a definir el tió de consulta hecha por el cliente: get, post, delete, etc.
+-> la función callback será la respuesta del servidor ante la consulta.
+
+app.get('/ruta', ()=>{}) //ruta para solicitar datos
+app.post('/ruta', ()=>{}) //ruta para ingresar datos
+app.put('/ruta', ()=>{}) //ruta para actualizar datos
+app.delete('/ruta', ()=>{}) //ruta para eliminar datos
+app.all('*', ()=>{}) //ruta por defecto. Ante cualquier ruta que no exista, el servidor debe responder algo.
+
+Cada una de las funciones callback, reciben dos parametros. Un request y un response. por tanto a cada una de ellas, se debe entregar el argumento req y res.
+
+app.get('/ruta', (req,res)=>{}) //ruta para solicitar datos
+app.post('/ruta', (req,res)=>{}) //ruta para ingresar datos
+app.put('/ruta', (req,res)=>{}) //ruta para actualizar datos
+app.delete('/ruta', (req,res)=>{}) //ruta para eliminar datos
+app.all('*', (req,res)=>{}) //ruta por defecto. Ante cualquier ruta que no exista, el servidor debe responder algo.
+
+Con esto, nuestro archivo app.js tiene la siguiente estructura:
+
+import express from 'express' // importamos express
+const app = express() // Ejecutamos express y su ejecución la almacenamos en una constante
+const PORT = process.env.PORT ?? 3000 // llamamos a la variable PORT desde nuestras variables de entorno y si esta no está creada, por defecto define el puerto 3000
+const PATH = process.env.DB_DATABASE
+
+app.get(`/${PATH}`, (req, res) => { }) // ruta para solicitar datos
+app.post(`/${PATH}`, (req, res) => { }) // ruta para ingresar datos
+app.put(`/${PATH}`, (req, res) => { }) // ruta para actualizar datos
+app.delete(`/${PATH}`, (req, res) => { }) // ruta para eliminar datos
+
+app.all('*', (req, res) => { }) // ruta por defecto. Ante cualquier ruta que no exista, el servidor debe responder algo.
+
+app.listen(PORT, () => { console.log('server Up') })
+
+
+13. Levantamos el servidor en la terminal ejecutando:
+
+npm run dev
+
+En al terminal debemos ver:
+
+[nodemon] 3.1.4
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node index.js`
+server Up... Listening
+
+14. -> Un punto importante de entender es que los browser, es decir los navegadores, solo pueden ejecutar consultas o peticiones del tipo GET. Las peticiones del tipo post put delete, se
+hacen mediante javascript o utilizando un aplicativo o componente de vscode llamado thunder client.
+
+15.- Vamos a probar si el servidor funciona. Para ello, vamos a reescribir nuestra consulta por defecto:
+
+app.all('*', (_, res) => {
+  res.json({ code: 404, message: 'El recurso que consultas no está disponible' })
+}) // ruta por defecto. Ante cualquier ruta que no exista, el servidor debe responder algo.
+
+
+Luego, al ejecutar una petición del tipo GET en thunder client:
+
+http://localhost:3000/prueba
+
+Obtenemos como respuesta:
+
+{
+  "code": 404,
+  "message": "El recurso que consultas no está disponible"
+}
+
+Lo mismo ocurre si hacemos una petición de otro tipo, cualquiera sea que no hayamos definido se entregará una respuesta por defecto.
+
+16.- DEFINICIÓN DE MIDDLEWARE
+Escribimos la siguiente línea en nuestro archivo app.js
+
+app.use(express.json())
+
+17. Instalamos CORS
+Referencias cruzadas. Dede un dominiio A puedo hacer una consulta a un dominio B. Con esto, puedo autorizar IP que hagan consultas. Las demas pueden quedar bloqueadas. CORS se utiliza
+como un MIDDLEWARE y lo instalamos ejecutando:
+
+npm i cors
+
+luego, en nuestro archivo app.js escribimos la línea
+
+import cors from 'cors'
+
+y mas abajo...
+
+app.use(cors())
+
+
+/************************************ HASTA AQUI, EL SERVIDOR ESTÁ LISTO **************************************/
+En adelante, tendremos que:
+
+-> Enlazar nuestro servidor con una base de datos
+-> Trabajar en las respuestas que nuestro servidor entregará a cada una de las peticiones y
+/************************************ HASTA AQUI, EL SERVIDOR ESTÁ LISTO **************************************/
+
+/*********CONFIGURACIÓN BASE DE DATOS*********/
+
+1.- Debemos tener siempre presente que el cliente JAMAS interactua con la base de datos. El intermediario debe ser nuestro servidor y por buena práctica siempre se recomienda crear dos archivos
+con funciones separadas (principio de responsabilidad unica)
+
+-> Un archivo de conexión a la base de datos
+-> Un archivo encargado de procesar las consultas a la base de datos
+
+Como en el programa hemos venido trabajando con con postgres, debemos instalar el paquete pg en express. Lo instalamos con la siguiente línea de código:
+
+npm i pg
+
+2.- Procedemos a crear la estructura para trabajar con nuestra base de datos.
+
+- En el directorio Raiz creamos una carpeta llamada database y dentro de ella, dos archivos:
+  - DDL.sql
+  - DML.sql
+- En la carpeta SERVER, creamos una subcarpeta llamada database y dentro de ella, un archivo llamado db_connect.js  /****DB_CONNECT****/
+
+3.- En el archivo db_connect debemos llamar a pg. lo importamos y luego lo desectructuramos. Escribimos las siguientes líneas de codigo:
+
+import pg from 'pg'
+const {Pool} = pg
+
+Ahora, ojo... Pool (con mayuscula) es una clase por medio de la cual podemos ejecutar una conexión a una base de datos. Al ser una clase, podemos crear NUEVAS INSTANCIAS de esta clase
+(Es decir, nuevas conexiones) mediante una palabra reservada llamada new. Luego, escribimos la siguiente línea de codigo:
+
+const pool = new Pool(config)
+
+**La nueva conexión a la base de datos se guardará en nuestra constante llamada pool (minusculas).
+
+Como ya dijimos, al crear nueva conexión a una DB (una nueva instancia de la clase Pool), se le deben entregar como argumentos distintos valores de configuración (propiedades para el
+constructor de la nueva instancia - POO). Estos valores de configuración, son enrealidad los datos de acceso a nuestra base de datos. Estos valores se los entregaremos por medio del
+objeto config el cual procederemos a declarar a continuación.
+
+const config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_DATABASE,
+  allowExitOnIdle: true
+}
+
+const pool = new Pool(config) // Esta constante pool es la que nos permitirá conectarnos a nuestra base de datos.
+
+Pero, como podemos ver, el objeto config hace uso de las variables de entorno, por tanto las tenemos que definir en el archivo .env. Vamos al archivo .env y escribimos:
+
+//POSTGRES SQL
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=
+DB_DATABASE=
+DB_TABLE=
+
+y asignamos los valores que corresponden. Sin comillas.
+
+4.- Volvemos a nuestros archivos DDL y DML creados en la carpeta database del directorio raiz.
+
+- Dentro del archivo DDL está la definición de nuestra base de datos: Es un respaldo. Como ejemplo, considerar:
+
+CREATE DATABASE joyas;
+\c joyas;
+CREATE TABLE inventario (
+id        SERIAL,
+nombre    VARCHAR(50),
+categoria VARCHAR(50),
+metal     VARCHAR(50),
+precio    INT,
+stock     INT
+);
+
+Luego, en nuestro archivo DML van los datos de prueba:
+
+INSERT INTO inventario (nombre, categoria, metal, precio, stock) VALUES
+(DEFAULT, 'Collar Heart', 'collar', 'oro', 20000 , 2),
+(DEFAULT, 'Collar History', 'collar', 'plata', 15000 , 5),
+(DEFAULT, 'Aros Berry', 'aros', 'oro', 12000 , 10),
+(DEFAULT, 'Aros Hook Blue', 'aros', 'oro', 25000 , 4),
+(DEFAULT, 'Anillo Wish', 'aros', 'plata', 30000 , 4),
+(DEFAULT, 'Anillo Cuarzo Greece', 'anillo', 'oro', 40000 , 2);
+
+5.- Recordar que en (3.**) Creamos una nueva instancia de conexión a la base de datos llamada pool.
+
+Tener presente que aún estamos trabajando en el archivo db_connect el cual es el responsable de conectarse con la base de datos y que es otro el archivo encargado de definir las consultas
+(query). El archivo db_connect, solo toma las consultas (query's proveniente de otro archivo) y las ejecuta. Esto, lo haremos definiendo un metodo el cual llamaremos db y lo exportaremos
+por default.
+
+const db = async (query, values) => {
+  try {
+    const result = await pool.query(query, values)
+    return result.rows
+  } catch (error) {
+    console.error('[db_connect] => db:', error)
+    const newError = { status: false, message: error }
+    throw newError
+  }
+}
+
+export default db
+
+El metodo db tomará la query que definamos en otro archivo y la enviará a la base de datos. Ahora, hay que tener presente que la base de datos puede estar en otro servidor. En nuestro caso,
+es el mismo PC pero, perfectamente la base de datos puede estar por ejemplo, en la nube, por tanto esta función debe ser asincrona.
+
+Luego, la query recibida, se enviará como parámetro al metodo pool.query() . Recordar que la conexión a la DB se realizó en la constante pool y para enviar una query a la db, utilizamos el
+metodo query y enviamos como argumento la query recibida.
+
+Finalmente, exportamos esa funcion.
+
+Así, el archivo de conexión quedaría:
+
+import pg from 'pg'
+
+const { Pool } = pg
+
+const config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_DATABASE,
+  allowExitOnIdle: true
+}
+
+const pool = new Pool(config)
+
+const db = async (query, values) => {
+  try {
+    const result = await pool.query(query, values)
+    return result.rows
+  } catch (error) {
+    console.error('[db_connect] => db:', error)
+    const newError = { status: false, message: error }
+    throw newError
+  }
+}
+
+export default db
+
+
+Ahora, hemos mencionado que las query se definirán en otro archivo... Primero, vamos a crear una carpeta llamada models dentro de la carpeta server y dentro, un archivo que se llamara
+nombre_db.models.js (reemplazar la primera parte con el nombre de nuestra base de datos). En este archivo, vamos a definir todas nuestras funciones (metodos) que se ejecutarán en base
+a la query recibida.
+
+Escribimos:
+
+import db from '../database/db_connects.js'
+const DB_TABLE = process.env.DB_TABLE
+
+export const findAll = async () => await db(`SELECT * FROM ${DB_TABLE};`)
+
+
+
+
+
+//const id = 9
+//db('SELECT * FROM medicamentos WHERE id=$1;', [id])
